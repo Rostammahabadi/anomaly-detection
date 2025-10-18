@@ -1,0 +1,8 @@
+# Database
+DATABASE_URL="postgresql://postgres:password@localhost:5432/anomaly_detection"
+
+# JWT Secret for authentication
+JWT_SECRET="your-simple-jwt-secret-key-for-development"
+
+# OpenAI API Key (optional)
+OPENAI_API_KEY="your-openai-api-key-here"
