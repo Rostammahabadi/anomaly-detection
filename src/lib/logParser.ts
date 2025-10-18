@@ -10,6 +10,9 @@ export interface ParsedLogEntry {
   status: number;
   size: number;
   raw: string;
+  isAnomalous?: boolean;
+  anomalyReason?: string;
+  anomalyConfidence?: number;
 }
 
 export interface LogAnalysis {
@@ -29,6 +32,8 @@ export interface LogAnalysis {
     description: string;
     confidence: number;
     entry?: ParsedLogEntry;
+    ip?: string;
+    severity: "low" | "medium" | "high" | "critical";
   }>;
   aiInsights?: string;
   summary: {
@@ -52,6 +57,130 @@ export interface LogAnalysis {
 
 const APACHE_LOG_REGEX =
   /^(\S+) \S+ \S+ \[([^\]]+)\] "(\S+) (\S+) \S+" (\d+) (\d+|-)/;
+
+// Helper function to detect time-window based anomalies
+function detectTimeWindowAnomalies(entries: ParsedLogEntry[]) {
+  const anomalies: Array<{
+    type: string;
+    description: string;
+    confidence: number;
+    ip?: string;
+    severity: "low" | "medium" | "high" | "critical";
+  }> = [];
+  const timeWindowMs = 5 * 60 * 1000; // 5 minutes
+  const requestThreshold = 50; // >50 requests in 5 minutes
+
+  // Group entries by IP
+  const ipGroups: Record<string, ParsedLogEntry[]> = {};
+  entries.forEach((entry) => {
+    if (!ipGroups[entry.ip]) {
+      ipGroups[entry.ip] = [];
+    }
+    ipGroups[entry.ip].push(entry);
+  });
+
+  // Check each IP for time-window anomalies
+  Object.entries(ipGroups).forEach(([ip, ipEntries]) => {
+    if (ipEntries.length < requestThreshold) return;
+
+    // Sort by timestamp
+    ipEntries.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+
+    // Sliding window analysis
+    for (let i = 0; i < ipEntries.length; i++) {
+      const windowStart = ipEntries[i].timestamp.getTime();
+      const windowEnd = windowStart + timeWindowMs;
+
+      let windowCount = 1; // Count the current entry
+
+      // Count entries within the time window
+      for (let j = i + 1; j < ipEntries.length; j++) {
+        if (ipEntries[j].timestamp.getTime() <= windowEnd) {
+          windowCount++;
+        } else {
+          break; // No more entries in this window
+        }
+      }
+
+      if (windowCount > requestThreshold) {
+        const excessRequests = windowCount - requestThreshold;
+        const confidence = Math.min(
+          100,
+          (excessRequests / requestThreshold) * 100
+        );
+
+        anomalies.push({
+          type: "time_window_high_volume",
+          description: `Unusual number of requests from IP ${ip}: ${windowCount} requests in 5-minute window (threshold: ${requestThreshold})`,
+          confidence: Math.round(confidence),
+          ip,
+          severity:
+            windowCount > requestThreshold * 2
+              ? "critical"
+              : windowCount > requestThreshold * 1.5
+              ? "high"
+              : "medium",
+        });
+        break; // Only report once per IP
+      }
+    }
+  });
+
+  return anomalies;
+}
+
+// Helper function to detect rapid-fire requests (potential DoS)
+function detectRapidRequests(entries: ParsedLogEntry[]) {
+  const anomalies: Array<{
+    type: string;
+    description: string;
+    confidence: number;
+    ip?: string;
+    severity: "low" | "medium" | "high" | "critical";
+  }> = [];
+  const rapidThreshold = 10; // 10 requests per second
+  const timeWindowMs = 1000; // 1 second
+
+  // Group by IP and check for rapid bursts
+  const ipGroups: Record<string, ParsedLogEntry[]> = {};
+  entries.forEach((entry) => {
+    if (!ipGroups[entry.ip]) {
+      ipGroups[entry.ip] = [];
+    }
+    ipGroups[entry.ip].push(entry);
+  });
+
+  Object.entries(ipGroups).forEach(([ip, ipEntries]) => {
+    if (ipEntries.length < rapidThreshold) return;
+
+    ipEntries.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+
+    // Check for rapid bursts
+    for (let i = 0; i < ipEntries.length - rapidThreshold + 1; i++) {
+      const startTime = ipEntries[i].timestamp.getTime();
+      const endTime = ipEntries[i + rapidThreshold - 1].timestamp.getTime();
+
+      if (endTime - startTime <= timeWindowMs) {
+        const confidence = Math.min(
+          100,
+          (rapidThreshold / (timeWindowMs / 1000) / 10) * 100
+        );
+        anomalies.push({
+          type: "rapid_fire_requests",
+          description: `Rapid-fire requests detected from IP ${ip}: ${rapidThreshold} requests in ${
+            endTime - startTime
+          }ms`,
+          confidence: Math.round(confidence),
+          ip,
+          severity: "critical",
+        });
+        break; // Only report once per IP
+      }
+    }
+  });
+
+  return anomalies;
+}
 
 export function parseApacheLogLine(line: string): ParsedLogEntry | null {
   const match = line.match(APACHE_LOG_REGEX);
@@ -138,46 +267,117 @@ export function analyzeLogs(parseResult: ParseResult): LogAnalysis {
     }))
     .sort((a, b) => a.timestamp.localeCompare(b.timestamp));
 
-  // Basic anomaly detection
+  // Enhanced anomaly detection
   const anomalies: Array<{
     type: string;
     description: string;
     confidence: number;
     entry?: ParsedLogEntry;
+    ip?: string;
+    severity: "low" | "medium" | "high" | "critical";
   }> = [];
 
-  // High request volume from single IP
+  // Sort entries by timestamp for time-window analysis
+  const sortedEntries = entries.sort(
+    (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
+  );
+
+  // 1. Time-window based anomaly detection (>50 requests in 5 minutes)
+  const timeWindowAnomalies = detectTimeWindowAnomalies(sortedEntries);
+  anomalies.push(...timeWindowAnomalies);
+
+  // 2. Overall high request volume from single IP
   const ipCounts: Record<string, number> = {};
   entries.forEach((entry) => {
     ipCounts[entry.ip] = (ipCounts[entry.ip] || 0) + 1;
   });
 
-  const threshold = Math.max(10, totalEntries * 0.1); // At least 10 requests or 10% of total
+  const volumeThreshold = Math.max(10, totalEntries * 0.1); // At least 10 requests or 10% of total
   Object.entries(ipCounts).forEach(([ip, count]) => {
-    if (count > threshold) {
-      const confidence = Math.min(100, (count / threshold) * 50);
+    if (count > volumeThreshold) {
+      const confidence = Math.min(100, (count / volumeThreshold) * 50);
+      const severity = count > volumeThreshold * 2 ? "high" : "medium";
       anomalies.push({
-        type: "high_volume_ip",
-        description: `High request volume from IP ${ip}: ${count} requests`,
+        type: "high_volume_ip_overall",
+        description: `Unusual number of requests from IP ${ip}: ${count} total requests (${Math.round(
+          (count / totalEntries) * 100
+        )}% of all traffic)`,
         confidence: Math.round(confidence),
+        ip,
+        severity,
       });
     }
   });
 
-  // 4xx/5xx status codes
+  // 3. High error rate (4xx/5xx status codes)
   const errorEntries = entries.filter((e) => e.status >= 400);
-  if (errorEntries.length > totalEntries * 0.05) {
+  const errorRate = errorEntries.length / totalEntries;
+  if (errorRate > 0.05) {
     // More than 5% errors
-    const confidence = Math.min(
-      100,
-      (errorEntries.length / totalEntries) * 1000
-    );
+    const confidence = Math.min(100, errorRate * 1000);
+    const severity =
+      errorRate > 0.2 ? "high" : errorRate > 0.1 ? "medium" : "low";
     anomalies.push({
       type: "high_error_rate",
-      description: `High error rate: ${errorEntries.length} errors out of ${totalEntries} requests`,
+      description: `High error rate: ${
+        errorEntries.length
+      } errors out of ${totalEntries} requests (${Math.round(
+        errorRate * 100
+      )}%)`,
       confidence: Math.round(confidence),
+      severity,
     });
   }
+
+  // 4. Unusual HTTP methods
+  const methodCounts: Record<string, number> = {};
+  entries.forEach((entry) => {
+    methodCounts[entry.method] = (methodCounts[entry.method] || 0) + 1;
+  });
+
+  Object.entries(methodCounts).forEach(([method, count]) => {
+    // Flag unusual methods (anything other than GET, POST, HEAD)
+    if (!["GET", "POST", "HEAD"].includes(method) && count > 0) {
+      const confidence = Math.min(100, (count / totalEntries) * 2000);
+      anomalies.push({
+        type: "unusual_http_method",
+        description: `Unusual HTTP method detected: ${method} (${count} requests)`,
+        confidence: Math.round(confidence),
+        severity: "medium",
+      });
+    }
+  });
+
+  // 5. Suspicious URL patterns
+  const suspiciousUrls = entries.filter(
+    (entry) =>
+      entry.url.includes("../") ||
+      entry.url.includes("..\\") ||
+      entry.url.includes("<script") ||
+      entry.url.includes("union select") ||
+      entry.url.includes("script>") ||
+      entry.url.match(/\/admin|\/wp-admin|\/administrator|\/manager/i) ||
+      entry.url.includes("phpmyadmin") ||
+      entry.url.includes("web.config") ||
+      entry.url.includes(".env")
+  );
+
+  if (suspiciousUrls.length > 0) {
+    const confidence = Math.min(
+      100,
+      (suspiciousUrls.length / totalEntries) * 5000
+    );
+    anomalies.push({
+      type: "suspicious_urls",
+      description: `Suspicious URL patterns detected: ${suspiciousUrls.length} potentially malicious requests`,
+      confidence: Math.round(confidence),
+      severity: "high",
+    });
+  }
+
+  // 6. Rapid-fire requests (potential DoS)
+  const rapidRequests = detectRapidRequests(sortedEntries);
+  anomalies.push(...rapidRequests);
 
   // Generate summary statistics
   const timestamps = entries.map((e) => e.timestamp.getTime()).sort();

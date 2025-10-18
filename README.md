@@ -216,6 +216,92 @@ This project is designed to work with Docker. For production deployment:
 - API endpoints require authentication
 - Database queries are parameterized
 
+## 🚀 Deployment to Vercel
+
+### Prerequisites
+
+- Vercel account (free at vercel.com)
+- GitHub repository
+
+### Deployment Steps
+
+1. **Connect Repository:**
+
+   - Go to [vercel.com](https://vercel.com)
+   - Click "Import Project"
+   - Connect your GitHub repository
+
+2. **Configure Build Settings:**
+
+   - **Framework Preset:** Next.js
+   - **Root Directory:** `./` (leave default)
+   - **Build Command:** `npm run build`
+   - **Output Directory:** `.next` (leave default)
+
+3. **Set Environment Variables:**
+   In Vercel dashboard → Project Settings → Environment Variables:
+
+   ```
+   JWT_SECRET=your-super-secure-jwt-secret-here
+   OPENAI_API_KEY=your-openai-api-key-here  # Optional
+   ```
+
+   Generate a secure JWT secret:
+
+   ```bash
+   openssl rand -base64 32
+   ```
+
+4. **Deploy:**
+   - Click "Deploy"
+   - Wait for build completion
+   - Visit your deployed URL
+
+### Troubleshooting Vercel Deployment
+
+**404 Error on Root Route:**
+
+- The home page redirects to `/login` automatically
+- Direct access to `/` shows a landing page
+
+**API Routes Not Working:**
+
+- Check environment variables are set in Vercel
+- Verify API routes are in `src/app/api/` directory
+
+**Build Failures:**
+
+- Ensure all dependencies are in `package.json`
+- Check TypeScript compilation errors
+
+**Database Issues:**
+
+- For production, use a hosted PostgreSQL service
+- Set `DATABASE_URL` environment variable in Vercel
+
+### Health Check
+
+Test your deployment with the health check endpoint:
+
+```
+GET https://your-app.vercel.app/api/health
+```
+
+Expected response:
+
+```json
+{
+  "status": "healthy",
+  "timestamp": "2025-01-18T...",
+  "environment": "production",
+  "version": "1.0.0",
+  "config": {
+    "jwtSecretConfigured": true,
+    "openAiKeyConfigured": true
+  }
+}
+```
+
 ## Contributing
 
 1. Fork the repository

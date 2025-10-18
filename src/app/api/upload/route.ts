@@ -106,7 +106,10 @@ BASIC STATISTICS:
 
 DETECTED ANOMALIES (Rule-based):
 ${analysis.anomalies
-  .map((a) => `- ${a.description} (${a.confidence}% confidence)`)
+  .map(
+    (a) =>
+      `- ${a.description} (${a.confidence}% confidence, severity: ${a.severity})`
+  )
   .join("\n")}
 
 TOP TRAFFIC SOURCES:
@@ -124,24 +127,25 @@ ${analysis.summary.topEndpoints
 SECURITY ANALYSIS REQUEST:
 As a SOC analyst, provide a comprehensive analysis including:
 
-1. **THREAT ASSESSMENT**: Identify potential security threats, attack patterns, or suspicious activities
-2. **TRAFFIC ANALYSIS**: Describe normal vs. abnormal traffic patterns
-3. **TIMELINE SUMMARY**: Summarize activity over time and identify peak periods
-4. **ANOMALY EVALUATION**: Assess the severity and confidence of detected anomalies
-5. **RECOMMENDATIONS**: Provide actionable security recommendations
-6. **RISK LEVEL**: Assign an overall risk level (Low/Medium/High/Critical)
+1. **THREAT ASSESSMENT**: Identify potential security threats, attack patterns, or suspicious activities beyond the rule-based detections
+2. **ANOMALY ANALYSIS**: Evaluate the detected anomalies, their severity levels, and identify any additional suspicious patterns not caught by rules
+3. **TRAFFIC ANALYSIS**: Describe normal vs. abnormal traffic patterns and identify potential attack campaigns or coordinated intrusions
+4. **TIMELINE SUMMARY**: Summarize activity over time, identify peak periods, and detect temporal attack patterns or campaign phases
+5. **ATTACK PATTERN RECOGNITION**: Look for coordinated attacks, scanning behavior, multi-stage intrusions, or APT indicators
+6. **RECOMMENDATIONS**: Provide actionable security recommendations with priority levels and implementation timelines
+7. **RISK LEVEL**: Assign an overall risk level (Low/Medium/High/Critical) with detailed justification
 
-Focus on indicators of:
-- Brute force attacks
-- SQL injection attempts
-- XSS attempts
-- Directory traversal
-- Unusual user agents or request patterns
-- DDoS patterns
-- Reconnaissance activity
-- Data exfiltration attempts
+Specifically analyze for and provide evidence of:
+- **Brute force attacks**: Failed login patterns, rapid authentication attempts, password spraying
+- **Injection attacks**: SQL injection, command injection, template injection, or other input sanitization bypasses
+- **Directory traversal**: Path manipulation attempts, file inclusion exploits, LFI/RFI vulnerabilities
+- **Reconnaissance**: Port scanning, version detection, information gathering, vulnerability probing
+- **DDoS patterns**: Traffic flooding, resource exhaustion, amplification attacks
+- **Data exfiltration**: Unusual outbound traffic, large file downloads, encoded data transfers
+- **Malware indicators**: Suspicious file access, command execution patterns, persistence mechanisms
+- **Zero-day exploits**: Unusual error patterns, unexpected system behavior, crash-inducing requests
 
-Be specific about IP addresses, timestamps, and patterns that warrant investigation.`;
+Provide specific evidence for each finding with IP addresses, timestamps, request patterns, and confidence levels. Flag any IPs, user agents, or URL patterns requiring immediate investigation, blocking, or alerting.`;
 
         console.log("🤖 Making OpenAI API call with model: gpt-5-nano");
         console.log("📊 Sending analysis data:", {

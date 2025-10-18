@@ -31,6 +31,8 @@ interface LogEntry {
       type: string;
       description: string;
       confidence: number;
+      ip?: string;
+      severity: "low" | "medium" | "high" | "critical";
     }>;
     summary: {
       timeRange: {
@@ -96,6 +98,19 @@ export default function ResultsPage() {
       ...prev,
       [sectionId]: !prev[sectionId],
     }));
+  };
+
+  const getAnomalyForEntry = (entry: any) => {
+    if (!selectedLog?.analysis_result?.anomalies) return null;
+
+    // Check if this entry is related to any anomaly
+    return selectedLog.analysis_result.anomalies.find((anomaly) => {
+      if (anomaly.ip === entry.ip) {
+        return true;
+      }
+      // Could add more sophisticated matching logic here
+      return false;
+    });
   };
 
   if (loading) {
@@ -329,33 +344,52 @@ export default function ResultsPage() {
                         <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg max-h-96 overflow-y-auto">
                           <div className="space-y-2">
                             {selectedLog.parsed_data?.map(
-                              (entry: any, index: number) => (
-                                <div
-                                  key={index}
-                                  className="p-3 bg-white rounded border text-sm"
-                                >
-                                  <div className="grid grid-cols-1 md:grid-cols-5 gap-2 text-xs">
-                                    <div>
-                                      <strong>IP:</strong> {entry.ip}
-                                    </div>
-                                    <div>
-                                      <strong>Time:</strong>{" "}
-                                      {new Date(
-                                        entry.timestamp
-                                      ).toLocaleString()}
-                                    </div>
-                                    <div>
-                                      <strong>Method:</strong> {entry.method}
-                                    </div>
-                                    <div>
-                                      <strong>URL:</strong> {entry.url}
-                                    </div>
-                                    <div>
-                                      <strong>Status:</strong> {entry.status}
+                              (entry: any, index: number) => {
+                                const anomaly = getAnomalyForEntry(entry);
+                                return (
+                                  <div
+                                    key={index}
+                                    className={`p-3 rounded border text-sm relative group ${
+                                      anomaly
+                                        ? "bg-red-50 border-red-300 shadow-sm"
+                                        : "bg-white"
+                                    }`}
+                                    title={
+                                      anomaly
+                                        ? `${anomaly.description} (${anomaly.confidence}% confidence)`
+                                        : undefined
+                                    }
+                                  >
+                                    {anomaly && (
+                                      <div className="absolute top-2 right-2">
+                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                          ⚠️ {anomaly.confidence}%
+                                        </span>
+                                      </div>
+                                    )}
+                                    <div className="grid grid-cols-1 md:grid-cols-5 gap-2 text-xs">
+                                      <div>
+                                        <strong>IP:</strong> {entry.ip}
+                                      </div>
+                                      <div>
+                                        <strong>Time:</strong>{" "}
+                                        {new Date(
+                                          entry.timestamp
+                                        ).toLocaleString()}
+                                      </div>
+                                      <div>
+                                        <strong>Method:</strong> {entry.method}
+                                      </div>
+                                      <div>
+                                        <strong>URL:</strong> {entry.url}
+                                      </div>
+                                      <div>
+                                        <strong>Status:</strong> {entry.status}
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
-                              )
+                                );
+                              }
                             ) || (
                               <p className="text-gray-500 text-center py-4">
                                 No parsed data available
@@ -374,19 +408,53 @@ export default function ResultsPage() {
                         </h3>
                         <div className="space-y-2">
                           {selectedLog.analysis_result.anomalies.map(
-                            (anomaly, index) => (
-                              <div
-                                key={index}
-                                className="p-3 bg-red-50 border border-red-200 rounded-lg"
-                              >
-                                <p className="text-sm font-medium text-red-800">
-                                  {anomaly.description}
-                                </p>
-                                <p className="text-xs text-red-600 mt-1">
-                                  Confidence: {anomaly.confidence}%
-                                </p>
-                              </div>
-                            )
+                            (anomaly, index) => {
+                              const severityColors = {
+                                low: "bg-yellow-50 border-yellow-200 text-yellow-800",
+                                medium:
+                                  "bg-orange-50 border-orange-200 text-orange-800",
+                                high: "bg-red-50 border-red-200 text-red-800",
+                                critical:
+                                  "bg-red-100 border-red-300 text-red-900",
+                              };
+
+                              return (
+                                <div
+                                  key={index}
+                                  className={`p-3 border rounded-lg ${
+                                    severityColors[anomaly.severity] ||
+                                    severityColors.medium
+                                  }`}
+                                >
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex-1">
+                                      <p className="text-sm font-medium">
+                                        {anomaly.description}
+                                      </p>
+                                      <div className="flex items-center space-x-2 mt-1">
+                                        <span className="text-xs">
+                                          Confidence: {anomaly.confidence}%
+                                        </span>
+                                        <span
+                                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                            anomaly.severity === "critical"
+                                              ? "bg-red-200 text-red-900"
+                                              : anomaly.severity === "high"
+                                              ? "bg-red-100 text-red-800"
+                                              : anomaly.severity === "medium"
+                                              ? "bg-orange-100 text-orange-800"
+                                              : "bg-yellow-100 text-yellow-800"
+                                          }`}
+                                        >
+                                          {anomaly.severity?.toUpperCase() ||
+                                            "MEDIUM"}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            }
                           )}
                         </div>
                       </div>
