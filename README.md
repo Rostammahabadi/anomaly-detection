@@ -8,8 +8,9 @@ A full-stack web application for uploading, parsing, and analyzing Apache access
 - **File Upload**: Upload Apache access log files (.txt, .log) up to 10MB
 - **Log Parsing**: Automatic parsing of Apache access log format
 - **Anomaly Detection**: Rule-based detection of suspicious patterns
-- **AI Analysis**: OpenAI GPT integration for threat detection and SOC insights
+- **🤖 AI-Powered Analysis**: OpenAI GPT integration for advanced threat detection and SOC insights
 - **Data Visualization**: Timeline charts and analysis summaries
+- **Database Storage**: PostgreSQL with Prisma ORM for persistent data
 - **Responsive UI**: Modern interface built with Next.js and Tailwind CSS
 
 ## Tech Stack
@@ -18,7 +19,7 @@ A full-stack web application for uploading, parsing, and analyzing Apache access
 - **Backend**: Next.js API Routes, Node.js
 - **Database**: PostgreSQL with Prisma ORM
 - **Authentication**: JWT tokens with bcrypt password hashing
-- **AI**: OpenAI GPT-3.5-turbo for log analysis
+- **AI**: OpenAI GPT-4o for advanced log analysis
 - **Deployment**: Docker-ready for containerized deployment
 
 ## Quick Start
@@ -148,15 +149,33 @@ Example:
 127.0.0.1 - - [10/Oct/2025:13:55:36 -0700] "GET /index.html HTTP/1.0" 200 2326
 ```
 
-## AI Integration
+## 🤖 AI-Powered Security Analysis
 
-OpenAI GPT is used in the backend analysis step for:
+The application integrates OpenAI's GPT-4o model for advanced security analysis of Apache access logs. This AI-powered analysis complements the rule-based anomaly detection by providing:
 
-- Threat detection and security insights
-- Summarization of SOC-relevant findings
-- Anomaly identification and explanations
+### AI Analysis Features
 
-The AI analysis is optional - if no OpenAI API key is provided, basic rule-based analysis is performed.
+- **Threat Assessment**: Identifies potential security threats, attack patterns, and malicious activities
+- **Traffic Analysis**: Analyzes normal vs. abnormal traffic patterns with contextual insights
+- **Timeline Summarization**: Provides narrative summaries of activity over time
+- **Risk Level Assignment**: Assigns overall risk levels (Low/Medium/High/Critical)
+- **Actionable Recommendations**: Provides SOC-specific security recommendations
+- **Anomaly Evaluation**: Assesses the severity and context of detected anomalies
+
+### AI Analysis Process
+
+1. **Data Preparation**: Log entries are formatted with timestamps, IPs, methods, URLs, and status codes
+2. **Statistical Context**: AI receives comprehensive statistics including traffic patterns, error rates, and anomaly data
+3. **Security Analysis**: GPT model analyzes patterns for indicators of attacks, reconnaissance, and data exfiltration
+4. **Report Generation**: Produces detailed security analysis with specific findings and recommendations
+
+### Configuration
+
+Set the `OPENAI_API_KEY` environment variable to enable AI analysis. Without the API key, the application falls back to rule-based anomaly detection only.
+
+### AI Analysis Documentation
+
+The AI integration is clearly documented in code comments indicating where AI is used for threat detection and summarization, ensuring transparency about AI usage in the security analysis pipeline.
 
 ## Sample Data
 

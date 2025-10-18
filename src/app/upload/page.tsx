@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import ReactMarkdown from "react-markdown";
 
 interface AnalysisResult {
   totalEntries: number;
@@ -192,9 +193,9 @@ export default function UploadPage() {
                   <h3 className="text-lg font-semibold text-purple-900 mb-3">
                     AI Analysis Insights
                   </h3>
-                  <p className="text-purple-800 whitespace-pre-line">
-                    {result.aiInsights}
-                  </p>
+                  <div className="text-purple-800 prose prose-sm max-w-none">
+                    <ReactMarkdown>{result.aiInsights}</ReactMarkdown>
+                  </div>
                 </div>
               )}
             </div>
