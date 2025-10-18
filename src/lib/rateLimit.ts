@@ -1,6 +1,8 @@
 // Simple in-memory rate limiter for API protection
 // In production, use Redis or a more robust solution
 
+import { NextRequest, NextResponse } from "next/server";
+
 interface RateLimitEntry {
   count: number;
   resetTime: number;
@@ -71,12 +73,15 @@ export const apiRateLimiter = new RateLimiter(60 * 1000, 60); // 60 requests per
  */
 export function withRateLimit(
   rateLimiter: RateLimiter,
-  identifierFn?: (request: any) => string
+  identifierFn?: (request: NextRequest) => string
 ) {
   return function (
-    handler: (request: any, ...args: unknown[]) => Promise<any> | any
+    handler: (
+      request: NextRequest,
+      ...args: unknown[]
+    ) => Promise<NextResponse> | NextResponse
   ) {
-    return async function (request: any, ...args: unknown[]) {
+    return async function (request: NextRequest, ...args: unknown[]) {
       // Get client identifier (IP address or user ID)
       const identifier = identifierFn
         ? identifierFn(request)
