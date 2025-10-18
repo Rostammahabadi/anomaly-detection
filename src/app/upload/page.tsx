@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import toast from "react-hot-toast";
 import ReactMarkdown from "react-markdown";
 
 interface AnalysisResult {
@@ -37,8 +38,50 @@ export default function UploadPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
+      // Validate file type
+      const allowedExtensions = [".txt", ".log"];
+      const fileExtension = selectedFile.name
+        .toLowerCase()
+        .substring(selectedFile.name.lastIndexOf("."));
+
+      if (!allowedExtensions.includes(fileExtension)) {
+        toast.error("Invalid file type. Please select a .txt or .log file.", {
+          duration: 4000,
+          icon: "📄",
+        });
+        return;
+      }
+
+      // Validate file size (10MB limit)
+      const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+      if (selectedFile.size > maxSize) {
+        toast.error(
+          `File size (${(selectedFile.size / (1024 * 1024)).toFixed(
+            1
+          )}MB) exceeds the 10MB limit.`,
+          {
+            duration: 4000,
+            icon: "📏",
+          }
+        );
+        return;
+      }
+
+      // Validate file is not empty
+      if (selectedFile.size === 0) {
+        toast.error("Selected file is empty. Please choose a valid log file.", {
+          duration: 4000,
+          icon: "📄",
+        });
+        return;
+      }
+
       setFile(selectedFile);
       setError("");
+      toast.success(`File "${selectedFile.name}" selected successfully!`, {
+        duration: 2000,
+        icon: "✅",
+      });
     }
   };
 
@@ -61,9 +104,23 @@ export default function UploadPage() {
       });
 
       setResult(response.data.analysis);
+      setError("");
+      toast.success("Log file uploaded and analyzed successfully!", {
+        duration: 4000,
+        icon: "🚀",
+      });
     } catch (err: unknown) {
       const error = err as { response?: { data?: { error?: string } } };
-      setError(error.response?.data?.error || "Upload failed");
+      const errorMessage =
+        error.response?.data?.error || "Upload failed. Please try again.";
+      setError(errorMessage);
+      toast.error(errorMessage, {
+        duration: 5000,
+        icon: "❌",
+      });
+
+      // Log additional error details for debugging
+      console.error("Upload error:", err);
     } finally {
       setUploading(false);
     }

@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { getAuthUser } from "@/lib/auth";
+import { validateFileUpload } from "@/lib/middleware";
+import { withRateLimit, uploadRateLimiter } from "@/lib/rateLimit";
 import { parseApacheLogs, analyzeLogs } from "@/lib/logParser";
 import OpenAI from "openai";
 
 const prisma = new PrismaClient();
 
-export async function POST(request: NextRequest) {
+async function uploadHandler(request: NextRequest) {
   try {
     // Authenticate user
     const user = getAuthUser(request);
@@ -18,24 +20,10 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get("file") as File;
 
-    if (!file) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 });
-    }
-
-    // Validate file type
-    if (!file.name.endsWith(".txt") && !file.name.endsWith(".log")) {
-      return NextResponse.json(
-        { error: "Invalid file type. Only .txt and .log files are allowed" },
-        { status: 400 }
-      );
-    }
-
-    // Check file size (10MB limit)
-    if (file.size > 10 * 1024 * 1024) {
-      return NextResponse.json(
-        { error: "File too large. Maximum size is 10MB" },
-        { status: 400 }
-      );
+    // Validate file upload
+    const validation = validateFileUpload(file);
+    if (!validation.valid) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
     // Read file content
@@ -233,3 +221,9 @@ Provide specific evidence for each finding with IP addresses, timestamps, reques
     );
   }
 }
+
+// Apply rate limiting to upload attempts (by user ID)
+export const POST = withRateLimit(uploadRateLimiter, (request) => {
+  const user = getAuthUser(request);
+  return user?.userId?.toString() || "unknown";
+})(uploadHandler);

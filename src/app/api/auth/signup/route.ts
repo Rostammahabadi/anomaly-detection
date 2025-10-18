@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { PrismaClient } from "@prisma/client";
+import { withRateLimit, authRateLimiter } from "@/lib/rateLimit";
 
 const prisma = new PrismaClient();
 
-export async function POST(request: NextRequest) {
+async function signupHandler(request: NextRequest) {
   try {
     const { username, password } = await request.json();
 
@@ -62,3 +63,6 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+// Apply rate limiting to signup attempts
+export const POST = withRateLimit(authRateLimiter)(signupHandler);

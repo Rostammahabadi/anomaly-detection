@@ -1,0 +1,15 @@
+192.168.1.10 - - [15/Oct/2025:09:15:23 -0700] "GET /index.html HTTP/1.1" 200 2048 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" 127.0.0.1
+192.168.1.20 - - [15/Oct/2025:09:15:24 -0700] "GET /css/main.css HTTP/1.1" 200 1536 "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36" 127.0.0.1
+192.168.1.30 - - [15/Oct/2025:09:15:25 -0700] "GET /js/app.js HTTP/1.1" 200 4096 "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36" 127.0.0.1
+192.168.1.10 - - [15/Oct/2025:09:15:26 -0700] "GET /about HTTP/1.1" 200 1024 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" 127.0.0.1
+192.168.1.40 - - [15/Oct/2025:09:15:27 -0700] "GET /products HTTP/1.1" 200 3072 "Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X) AppleWebKit/605.1.15" 127.0.0.1
+192.168.1.20 - - [15/Oct/2025:09:15:28 -0700] "POST /api/contact HTTP/1.1" 200 256 "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36" 127.0.0.1
+192.168.1.50 - - [15/Oct/2025:09:15:29 -0700] "GET /images/logo.png HTTP/1.1" 200 8192 "Mozilla/5.0 (Android 11; Mobile) AppleWebKit/537.36" 127.0.0.1
+192.168.1.30 - - [15/Oct/2025:09:15:30 -0700] "GET /blog HTTP/1.1" 200 5120 "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36" 127.0.0.1
+192.168.1.10 - - [15/Oct/2025:09:15:31 -0700] "GET /services HTTP/1.1" 200 2048 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" 127.0.0.1
+192.168.1.60 - - [15/Oct/2025:09:15:32 -0700] "GET /contact HTTP/1.1" 200 1536 "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36" 127.0.0.1
+192.168.1.40 - - [15/Oct/2025:09:15:33 -0700] "GET /faq HTTP/1.1" 200 1024 "Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X) AppleWebKit/605.1.15" 127.0.0.1
+192.168.1.20 - - [15/Oct/2025:09:15:34 -0700] "GET /privacy HTTP/1.1" 200 2048 "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36" 127.0.0.1
+192.168.1.70 - - [15/Oct/2025:09:15:35 -0700] "GET /terms HTTP/1.1" 200 3072 "Mozilla/5.0 (Android 10; Mobile) AppleWebKit/537.36" 127.0.0.1
+192.168.1.50 - - [15/Oct/2025:09:15:36 -0700] "GET /sitemap.xml HTTP/1.1" 200 512 "Mozilla/5.0 (Android 11; Mobile) AppleWebKit/537.36" 127.0.0.1
+192.168.1.30 - - [15/Oct/2025:09:15:37 -0700] "GET /robots.txt HTTP/1.1" 200 128 "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36" 127.0.0.1

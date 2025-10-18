@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -24,11 +25,22 @@ export default function LoginPage() {
       // Store token in localStorage
       localStorage.setItem("token", response.data.token);
 
+      toast.success(`Welcome back, ${response.data.user.username}!`, {
+        duration: 3000,
+        icon: "👋",
+      });
+
       // Redirect to upload page
       router.push("/upload");
     } catch (err: unknown) {
       const error = err as { response?: { data?: { error?: string } } };
-      setError(error.response?.data?.error || "An error occurred");
+      const errorMessage =
+        error.response?.data?.error || "Login failed. Please try again.";
+      setError(errorMessage);
+      toast.error(errorMessage, {
+        duration: 4000,
+        icon: "🔐",
+      });
     } finally {
       setLoading(false);
     }

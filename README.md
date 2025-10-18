@@ -2,6 +2,10 @@
 
 A full-stack web application for uploading, parsing, and analyzing Apache access logs with AI-powered security insights and anomaly detection.
 
+## 📹 Video Walkthrough
+
+A video walkthrough demonstrating the application features and usage will be recorded separately.
+
 ## Features
 
 - **User Authentication**: Secure login/signup with JWT tokens
@@ -151,6 +155,8 @@ Example:
 
 ## 🤖 AI-Powered Security Analysis
 
+**OpenAI GPT used for threat detection and summarization in the analysis step, with prompts focused on SOC insights.**
+
 The application integrates OpenAI's GPT-4o model for advanced security analysis of Apache access logs. This AI-powered analysis complements the rule-based anomaly detection by providing:
 
 ### AI Analysis Features
@@ -181,8 +187,11 @@ The AI integration is clearly documented in code comments indicating where AI is
 
 Sample Apache access log files are provided in the `examples/` directory:
 
-- `sample_access.log` - Basic access patterns
-- `suspicious_activity.log` - Contains potential security anomalies
+- `sample_access.log` - Basic access patterns with some admin probes
+- `suspicious_activity.log` - Contains brute force login attempts and reconnaissance
+- `normal_traffic.log` - Legitimate user traffic with various browsers and devices
+- `advanced_attacks.log` - Sophisticated attacks including SQL injection, path traversal, and credential stuffing
+- `mixed_traffic.log` - Combination of normal traffic mixed with security threats
 
 ## Development
 
