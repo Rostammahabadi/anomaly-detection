@@ -34,7 +34,10 @@ export default function Home() {
           {isClient && (
             <p className="text-sm text-gray-500">
               Already have an account?{" "}
-              <Link href="/login" className="text-indigo-600 hover:text-indigo-500">
+              <Link
+                href="/login"
+                className="text-indigo-600 hover:text-indigo-500"
+              >
                 Sign in here
               </Link>
             </p>
